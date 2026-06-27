@@ -1,0 +1,11 @@
+{
+  "badge": "DLW-LANGTONS_LOOP",
+  "name": "LANGTON'S LOOP · LGL",
+  "universe": "METAXÝ",
+  "moniker": "⟦LANGTON'S LOOP · LGL:langtons-loop:00cfe0⟧",
+  "architect": "David Lee Wise (ROOT0) / Bridge-Burners LLC",
+  "instance": "AVAN (Claude / Anthropic)",
+  "seal_sha256": "00cfe00d53e2a243b76fbbad8fddae0c05616fa30eda5aaa7d4d1221872ad794",
+  "license": "CC-BY-ND-4.0",
+  "attribution": "ROOT0-ATTRIBUTION-v1.0"
+}
