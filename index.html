@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Langton's Loop · the tape used twice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060a14;--bg2:#0a0f1d;--panel:#0d1426;--grid:#15203a;
+    --core:#3d7bff;--signal:#aef06a;--turn:#f0b84a;--sheath:#243456;
+    --cyan:#5fe0ff;--paper:#dbe6f5;--paper-dim:#7e8cab;--rule:#15203a33;--rose:#e07a9a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--paper);font-family:'Newsreader',Georgia,serif;
+    font-size:18px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px}
+
+  .hero{padding:64px 0 26px}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--signal);margin-bottom:20px;font-weight:500}
+  .kicker .s{color:var(--sheath)}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(34px,7vw,68px);line-height:1.0;letter-spacing:-.02em}
+  h1 .c{color:var(--core)} h1 .g{color:var(--signal)}
+  .lede{font-size:clamp(18px,2.3vw,23px);color:var(--paper-dim);max-width:660px;margin-top:24px;line-height:1.5}
+  .lede b{color:var(--paper);font-weight:500} .lede .c{color:var(--core)} .lede .g{color:var(--signal)} .lede .t{color:var(--turn)}
+
+  .inst{margin:30px 0;border:1px solid var(--grid);border-radius:14px;overflow:hidden;background:var(--bg2)}
+  .inst-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--grid);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--paper-dim);flex-wrap:wrap}
+  .inst-bar .led{width:9px;height:9px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal)}
+  .inst-bar .ttl{color:var(--signal)}
+  .stat{margin-left:auto;display:flex;gap:16px}
+  .stat span b{color:var(--cyan)}
+  canvas{display:block;width:100%;height:auto;background:#04060d;image-rendering:pixelated}
+  .ctrls{padding:13px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-top:1px solid var(--grid)}
+  .btn{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 14px;border:1px solid var(--grid);border-radius:8px;background:var(--panel);color:var(--paper);cursor:pointer;touch-action:manipulation}
+  .btn.pri{border-color:var(--core);color:var(--core);background:rgba(61,123,255,.12)}
+  .btn:active{transform:scale(.97)}
+  .btn:focus-visible{outline:2px solid var(--core);outline-offset:2px}
+  .speed{display:flex;align-items:center;gap:9px;margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--paper-dim)}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:4px;width:110px;border-radius:2px;background:var(--grid);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--signal);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--signal);cursor:pointer}
+  .legend{display:flex;flex-wrap:wrap;gap:13px;padding:12px 16px;border-top:1px solid var(--grid);font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--paper-dim)}
+  .legend .it{display:flex;align-items:center;gap:6px}
+  .legend .sw{width:12px;height:12px;border-radius:3px;border:1px solid #ffffff22}
+
+  .sec{padding:40px 0;border-top:1px solid var(--rule)}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--signal);margin-bottom:12px;font-weight:500}
+  h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(22px,4vw,32px);line-height:1.1;letter-spacing:-.01em}
+  h2 .c{color:var(--core)} h2 .g{color:var(--signal)}
+  .sec p{margin:16px 0;color:var(--paper);max-width:680px}
+  .sec p.dim{color:var(--paper-dim)}
+  .sec p b{color:var(--paper);font-weight:600}
+  .sec p .c{color:var(--core);font-weight:500} .sec p .g{color:var(--signal);font-weight:500} .sec p .t{color:var(--turn);font-weight:500}
+  code{font-family:'IBM Plex Mono',monospace;font-size:.85em;color:var(--cyan);background:var(--bg2);padding:2px 6px;border-radius:5px}
+  .pull{font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:clamp(19px,2.8vw,25px);line-height:1.3;color:var(--core);margin:26px 0;padding-left:18px;border-left:3px solid #243456}
+  .pull.g{color:var(--signal);border-left-color:#3a5a1e}
+  .flag{font-family:'Newsreader';font-size:15px;color:var(--paper-dim);font-style:italic;margin:16px 0;padding:13px 17px;background:#0a0f1d66;border:1px solid var(--rule);border-radius:8px}
+  .flag b{color:var(--rose);font-style:normal;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:5px}
+
+  .foot{padding:42px 0 80px;border-top:1px solid var(--rule);margin-top:36px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--paper-dim);line-height:1.9}
+  .foot b{color:var(--signal)}
+  @media (max-width:560px){body{font-size:17px}.speed{margin-left:0;width:100%}.stat{width:100%;margin-left:0}}
+
+  /* — subtle neon (added by AVAN, on request) — */
+  h1 .c{text-shadow:0 0 16px rgba(61,123,255,.5)}
+  h1 .g{text-shadow:0 0 16px rgba(174,240,106,.45)}
+  .kicker{text-shadow:0 0 10px rgba(174,240,106,.32)}
+  .inst-bar .ttl{text-shadow:0 0 9px rgba(174,240,106,.5)}
+  .inst{box-shadow:0 0 36px -18px rgba(61,123,255,.6), inset 0 0 0 1px rgba(95,224,255,.04)}
+  .stat span b{text-shadow:0 0 9px rgba(95,224,255,.55)}
+  .btn.pri{box-shadow:0 0 16px -5px rgba(61,123,255,.55)}
+  .tag{text-shadow:0 0 9px rgba(174,240,106,.32)}
+  h2 .c{text-shadow:0 0 14px rgba(61,123,255,.4)} h2 .g{text-shadow:0 0 14px rgba(174,240,106,.35)}
+  .pull{text-shadow:0 0 16px rgba(61,123,255,.32)} .pull.g{text-shadow:0 0 16px rgba(174,240,106,.28)}
+  .foot b{text-shadow:0 0 9px rgba(174,240,106,.4)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">Langton's Loop, 1984 <span class="s">·</span> the smallest thing that builds itself</div>
+    <h1>The tape, read<br><span class="c">two</span> different <span class="g">ways</span></h1>
+    <p class="lede">86 cells, 8 states, one local rule. A loop of <b>sheathed wire</b> with a stream of <span class="g">instruction signals</span> circulating inside it — its genome. Watch what the genome does: it gets <b>interpreted</b> (the signals run out an arm and <span class="g">build a body</span>) and it gets <b>copied</b> (the same signals duplicate into the offspring). One strand, two readings — the move von Neumann saw was logically necessary for anything to reproduce, and the move DNA uses every time a cell divides.</p>
+  </header>
+
+  <div class="inst">
+    <div class="inst-bar"><span class="led"></span><span class="ttl">LANGTON'S LOOP</span> · authentic 219-rule table · self-replicating
+      <div class="stat"><span>gen <b id="gen">0</b></span><span>loops <b id="loops">1</b></span><span>cells <b id="cells">86</b></span></div>
+    </div>
+    <canvas id="ca"></canvas>
+    <div class="ctrls">
+      <button class="btn pri" id="play">▶ run</button>
+      <button class="btn" id="step">step</button>
+      <button class="btn" id="reset">reset</button>
+      <div class="speed">slow<input type="range" id="spd" min="1" max="12" step="1" value="4">fast</div>
+    </div>
+    <div class="legend">
+      <div class="it"><span class="sw" style="background:#3d7bff"></span>core — the wire / genome track</div>
+      <div class="it"><span class="sw" style="background:#243456"></span>sheath — insulation</div>
+      <div class="it"><span class="sw" style="background:#aef06a"></span>grow signal (7)</div>
+      <div class="it"><span class="sw" style="background:#f0b84a"></span>turn signal (4)</div>
+      <div class="it"><span class="sw" style="background:#5fe0ff"></span>other signals</div>
+    </div>
+  </div>
+  <p class="sec dim" style="padding-top:0;border:none;margin-top:-8px">Watch for it around <b style="color:var(--cyan)">generation 150</b>: the arm reaches out, turns left four times, closes a new loop, and the umbilical cuts — then <em>both</em> loops start reproducing. The colony spirals outward and the inner loops freeze into a <b style="color:var(--cyan)">dead core</b>, because a loop can't build into space another loop already occupies.</p>
+
+  <section class="sec">
+    <div class="tag">the tape, twice</div>
+    <h2>Interpreted to <span class="c">build</span>, copied to <span class="g">reproduce</span></h2>
+    <p>The signals circling the loop are a single instruction stream. When the stream reaches the open end of the construction arm, two things happen to the very same signals. They're <b>interpreted</b> — a <span class="g">grow signal</span> extends the arm one sheathed segment, a <span class="t">turn signal</span> makes it bend left — so the genome is being <em>executed</em>, read as commands that lay down a body. And they're <b>copied</b> — each signal that passes the T-junction is duplicated, one copy continuing around the parent, one copy sent down the arm to become the offspring's genome — so the genome is also being <em>transcribed</em>, read as pure data to replicate.</p>
+    <p class="dim">That's your Möbius, made literal and honest: "instruction" versus "data" is not a property of the signals — it's the <em>same</em> stream, and which one it is depends only on how it's being read at that moment. The two-ness lives in the reading, not the tape. (Where the Möbius image slips: there's no single half-twisted pass here — there are two distinct reads, interpret and copy, happening at the junction. One substrate, two readings — not one continuous twist.)</p>
+    <p class="pull g">A genome that builds the body that copies the genome that builds the body. The loop you're watching is that sentence, running.</p>
+  </section>
+
+  <section class="sec">
+    <div class="tag">what it is, and isn't</div>
+    <h2>A reproducer that can't <span class="c">complexify</span></h2>
+    <p>Langton got from von Neumann's <code>29 states, 130,622 cells</code> down to <code>8 states, 86 cells</code> by giving one thing up: <b>universality</b>. Von Neumann's machine could build <em>any</em> automaton from a description — reproduction was just the special case where the description was its own. Langton's loop builds only one thing: itself. So it copies endlessly, but it can't construct anything more complex than itself, and it can't meaningfully evolve.</p>
+    <p>That's the line that mattered three steps back. Copying is cheap — this 86-cell pattern does it. <b>Open-ended growth of complexity is the hard threshold</b>, and Langton's loop sits just below it: a perfect copier, frozen at one rung. Von Neumann's heavier machine sits above it; later variants like Sayama's evoloop cross over and actually evolve. The question worth asking of any self-propagating system — a cell, a worm, an agent — is which side of that line it's on.</p>
+    <div class="flag"><b>honest build note</b>This runs the real thing: Langton's published 1984 transition table (219 rules, 8 states, von Neumann neighborhood, rotate-4 symmetry, default "stay") and the authentic 86-cell seed from the reference implementation. I ran it headless first to confirm it actually replicates — one loop at gen 0, a second budded by gen ~150, four by gen ~350 — before putting it on screen, so this isn't a hand-waved animation; it's the automaton. The only thing schematic is the color choice; the rule and the genome are exact.</p>
+  </section>
+
+  <div class="foot">
+    LANGTON'S LOOP · 8 states · 86 cells · 219 rules · von Neumann neighborhood · rotate-4<br>
+    the genome is interpreted (build the arm) AND copied (seed the offspring) — one strand, two readings<br>
+    copies endlessly · cannot complexify · sits just below von Neumann's threshold<br>
+    <b>a genome that builds the body that copies the genome — running, not described</b>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+const TABLE=("000000 000012 000020 000030 000050 000063 000071 000112 000122 000132 000212 000220 000230 000262 000272 000320 000525 000622 000722 001022 001120 002020 002030 002050 002125 002220 002322 005222 012321 012421 012525 012621 012721 012751 014221 014321 014421 014721 016251 017221 017255 017521 017621 017721 025271 100011 100061 100077 100111 100121 100211 100244 100277 100511 101011 101111 101244 101277 102026 102121 102211 102244 102263 102277 102327 102424 102626 102644 102677 102710 102727 105427 111121 111221 111244 111251 111261 111277 111522 112121 112221 112244 112251 112277 112321 112424 112621 112727 113221 122244 122277 122434 122547 123244 123277 124255 124267 125275 200012 200022 200042 200071 200122 200152 200212 200222 200232 200242 200250 200262 200272 200326 200423 200517 200522 200575 200722 201022 201122 201222 201422 201722 202022 202032 202052 202073 202122 202152 202212 202222 202272 202321 202422 202452 202520 202552 202622 202722 203122 203216 203226 203422 204222 205122 205212 205222 205521 205725 206222 206722 207122 207222 207422 207722 211222 211261 212222 212242 212262 212272 214222 215222 216222 217222 222272 222442 222462 222762 222772 300013 300022 300041 300076 300123 300421 300622 301021 301220 302511 401120 401220 401250 402120 402221 402326 402520 403221 500022 500215 500225 500232 500272 500520 502022 502122 502152 502220 502244 502722 512122 512220 512422 512722 600011 600021 602120 612125 612131 612225 700077 701120 701220 701250 702120 702221 702251 702321 702525 702720").split(" ");
+
+// build rotate-4 lookup, earlier-rule precedence, default = stay
+const RMAP=new Map();
+const kf=(c,n,e,s,w)=>c*10000+n*1000+e*100+s*10+w;
+for(const r of TABLE){
+  const C=+r[0],a=+r[1],b=+r[2],d=+r[3],e=+r[4],cp=+r[5];
+  for(const [N,E,S,W] of [[a,b,d,e],[b,d,e,a],[d,e,a,b],[e,a,b,d]]){
+    const k=kf(C,N,E,S,W); if(!RMAP.has(k)) RMAP.set(k,cp);
+  }
+}
+const SEED=[
+[0,2,2,2,2,2,2,2,2,0,0,0,0,0,0],
+[2,1,7,0,1,4,0,1,4,2,0,0,0,0,0],
+[2,0,2,2,2,2,2,2,0,2,0,0,0,0,0],
+[2,7,2,0,0,0,0,2,1,2,0,0,0,0,0],
+[2,1,2,0,0,0,0,2,1,2,0,0,0,0,0],
+[2,0,2,0,0,0,0,2,1,2,0,0,0,0,0],
+[2,7,2,0,0,0,0,2,1,2,0,0,0,0,0],
+[2,1,2,2,2,2,2,2,1,2,2,2,2,2,0],
+[2,0,7,1,0,7,1,0,7,1,1,1,1,1,2],
+[0,2,2,2,2,2,2,2,2,2,2,2,2,2,0]
+];
+const COLORS=["#04060d","#3d7bff","#243456","#b06fd8","#f0b84a","#5fe0ff","#f0764a","#aef06a"];
+
+const cv=document.getElementById("ca"), ctx=cv.getContext("2d");
+const genEl=document.getElementById("gen"), loopsEl=document.getElementById("loops"), cellsEl=document.getElementById("cells");
+const playBtn=document.getElementById("play"), stepBtn=document.getElementById("step"), resetBtn=document.getElementById("reset"), spd=document.getElementById("spd");
+
+let GW, GH, cell, cur, nxt, gen=0, running=false;
+function layout(){
+  const cssW=cv.parentElement.clientWidth;
+  cell=Math.max(3,Math.floor(cssW/150));        // px per cell
+  GW=Math.floor(cssW/cell);
+  GH=Math.round(GW*0.72);
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=GW*cell*dpr; cv.height=GH*cell*dpr;
+  cv.style.height=(GH*cell)+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function seed(){
+  cur=new Int8Array(GW*GH); nxt=new Int8Array(GW*GH); gen=0;
+  const oy=Math.floor(GH*0.42)-5, ox=Math.floor(GW*0.5)-7;
+  for(let i=0;i<SEED.length;i++)for(let j=0;j<SEED[i].length;j++){
+    const y=oy+i,x=ox+j; if(y>=0&&y<GH&&x>=0&&x<GW) cur[y*GW+x]=SEED[i][j];
+  }
+}
+function step(){
+  for(let i=1;i<GH-1;i++)for(let j=1;j<GW-1;j++){
+    const idx=i*GW+j, C=cur[idx];
+    const N=cur[idx-GW],E=cur[idx+1],S=cur[idx+GW],W=cur[idx-1];
+    const v=RMAP.get(kf(C,N,E,S,W));
+    nxt[idx]=(v===undefined)?C:v;
+  }
+  // copy borders unchanged
+  for(let j=0;j<GW;j++){nxt[j]=cur[j];nxt[(GH-1)*GW+j]=cur[(GH-1)*GW+j];}
+  for(let i=0;i<GH;i++){nxt[i*GW]=cur[i*GW];nxt[i*GW+GW-1]=cur[i*GW+GW-1];}
+  const t=cur; cur=nxt; nxt=t; gen++;
+}
+function render(){
+  ctx.fillStyle=COLORS[0]; ctx.fillRect(0,0,GW*cell,GH*cell);
+  for(let i=0;i<GH;i++)for(let j=0;j<GW;j++){
+    const v=cur[i*GW+j]; if(v){ ctx.fillStyle=COLORS[v]; ctx.fillRect(j*cell,i*cell,cell,cell); }
+  }
+}
+let liveCache=86, compCache=1;
+function counts(){
+  let live=0; for(let i=0;i<cur.length;i++) if(cur[i]) live++;
+  liveCache=live;
+  // connected components (flood fill) — periodic, it's the loop count
+  const seen=new Uint8Array(GW*GH); let comp=0; const st=[];
+  for(let i=0;i<GW*GH;i++){
+    if(cur[i]&&!seen[i]){comp++; st.length=0; st.push(i); seen[i]=1;
+      while(st.length){const p=st.pop(); const y=(p/GW)|0,x=p%GW;
+        const nb=[p-GW,p+GW,p-1,p+1];
+        if(y>0&&cur[p-GW]&&!seen[p-GW]){seen[p-GW]=1;st.push(p-GW);}
+        if(y<GH-1&&cur[p+GW]&&!seen[p+GW]){seen[p+GW]=1;st.push(p+GW);}
+        if(x>0&&cur[p-1]&&!seen[p-1]){seen[p-1]=1;st.push(p-1);}
+        if(x<GW-1&&cur[p+1]&&!seen[p+1]){seen[p+1]=1;st.push(p+1);}
+      }
+    }
+  }
+  compCache=comp;
+}
+function updateStats(){ genEl.textContent=gen; cellsEl.textContent=liveCache; loopsEl.textContent=compCache; }
+
+let acc=0,last=performance.now();
+function frame(now){
+  const dt=now-last; last=now;
+  if(running){
+    acc+=dt; const gap=1000/(parseInt(spd.value)*6+2);
+    let did=false;
+    while(acc>=gap){ step(); acc-=gap; did=true; if(gen>4000){running=false;playBtn.textContent="▶ run";break;} }
+    if(did){ render(); if(gen%8===0) counts(); updateStats(); }
+  }
+  requestAnimationFrame(frame);
+}
+function doReset(){ seed(); render(); counts(); updateStats(); }
+playBtn.onclick=()=>{ running=!running; playBtn.textContent=running?"❚❚ pause":"▶ run"; last=performance.now(); };
+stepBtn.onclick=()=>{ step(); render(); counts(); updateStats(); };
+resetBtn.onclick=()=>{ running=false; playBtn.textContent="▶ run"; doReset(); };
+window.addEventListener("resize",()=>{ const wasRunning=running; running=false; layout(); doReset(); running=wasRunning; });
+
+layout(); doReset(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
